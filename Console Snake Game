@@ -1,0 +1,173 @@
+#include <iostream>
+#include <conio.h>
+#include <Windows.h>
+
+using namespace std;
+
+
+bool gameOver; //отвечает за проигрыш
+const int widht = 20; //высота игры
+const int height = 20; //ширина игры
+int x, y, fruitX, fruitY, score; //создание координат и счета очков
+int tailX[100], tailY[100]; //хвост змейки
+int nTail; //значение длинны хвоста
+enum eDirection { STOP = 0, LEFT, RIGHT, UP, DOWN }; //направление движения
+eDirection dir;
+
+void Setup(){ //начало игры
+	gameOver = false;
+	dir = STOP;
+	x = widht / 2 - 1;
+	y = height / 2 - 1;
+
+	//спавн фрукта	
+	fruitX = rand() % widht; 
+	fruitY = rand() % height; 
+
+	//счет
+	score = 0;
+}
+
+//отрисовка игры
+void Draw(){
+	system("cls");
+		for (int i = 0; i < widht + 1; i++)
+			cout << "#";
+		cout << endl;
+
+		//отрисовка периметра поля
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < widht; j++) {
+				if (j == 0 || j == widht - 1)
+					cout << "#";
+
+				//отрисовка головы змеи
+				if (i == y && j == x)
+					cout << "0";
+
+				//отрисовка фрукта
+				else if (i == fruitY && j == fruitX)
+					cout << "F";
+
+				//отрисовка хвоста
+				else {
+					bool print = false;
+					for (int k = 0; k < nTail; k++) { 
+						if (tailX[k] == j && tailY[k] == i) {
+							print = true;
+							cout << "o";
+						}
+					}
+					if (!print)
+						cout << " ";
+				}
+			}
+			cout << endl;
+		}
+
+		for (int i = 0; i < widht + 1; i++)
+			cout << "#";
+		cout << endl;
+		//показывает счет		
+		cout << "SCORE = " << score << endl;
+}
+//назначение клавиш движения
+void Input(){ 
+	if (_kbhit()) {
+		switch (_getch())
+		{
+		case 'a':
+			dir = LEFT;
+			break;
+		case 'w':
+			dir = UP;
+			break;
+		case 's':
+			dir = DOWN;
+			break;
+		case 'd':
+			dir = RIGHT;
+			break;
+		case 'x':
+			gameOver = true;
+			break;
+		}
+	}
+}
+
+void Logic(){
+//отрисовка хвоста
+	int prevX = tailX[0];
+	int prevY = tailY[0];
+	int prev2X, prev2Y;
+	tailX[0] = x;
+	tailY[0] = y;
+	for (int i = 1; i < nTail; i++) {
+		prev2X = tailX[i];
+		prev2Y = tailY[i];
+		tailX[i] = prevX;
+		tailY[i] = prevY;
+		prevX = prev2X;
+		prevY = prev2Y;
+	}
+	//отрисовка движения
+	switch (dir){
+
+		case LEFT: 
+			x--;
+			break;
+		case RIGHT:
+			x++;
+			break;
+		case UP:
+			y--;
+			break;
+		case DOWN:
+			y++;
+			break;
+	}
+
+	//проигрыш, если змейка достигла стены
+	//if (x > widht || x < 0 || y > height || y < 0)
+		//gameOver = true;
+
+	//система, при которой змейка может зайти в одну сторону, и выйти с противоположной
+	if (x >= widht - 1)
+		x = 0;
+	else if (x < 0)
+		x = widht - 2;
+
+	if (y >= height)
+		y = 0;
+	else if (y < 0)
+		y = height - 1;
+
+	//проигрыш, если змейка "съела" свой хвост
+	for (int i = 0; i < nTail; i++) {
+		if (tailX[i] == x && tailY[i] == y)
+			gameOver = true;
+	}
+
+	//спавн фрукта, после его съедения
+	if (x == fruitX && y == fruitY) {
+		score += 10;
+		fruitX = rand() % widht;
+		fruitY = rand() % height;
+		nTail++;
+	}
+}
+
+
+int main() {
+
+	//инициализация переменных
+	Setup();
+	while (!gameOver) {
+		Draw();
+		Sleep(250);
+		Input();
+		Logic();
+	}
+
+	return 0;
+}
